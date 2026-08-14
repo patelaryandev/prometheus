@@ -2,7 +2,7 @@
 
 A production-ready FastAPI application for tracking expenses and managing budgets. Track spending across categories, set monthly limits, and receive alerts when approaching budget thresholds. Built with async SQLAlchemy, JWT authentication, and comprehensive testing.
 
-**🚀 [Live Demo](https://your-app-url.onrender.com/docs)** ← Replace with your actual Render URL
+**🚀 [Live Demo](https://expense-tracker-api-XXXX.onrender.com/docs)** | [API Health](https://expense-tracker-api-XXXX.onrender.com/health)
 
 ---
 
