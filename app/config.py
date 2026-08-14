@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     # Application
-    app_name: str = "FastAPI Template"
-    app_version: str = "0.1.0"
+    app_name: str = "Expense Tracker API"
+    app_version: str = "1.0.0"
     environment: str = "development"
     debug: bool = True
     log_level: str = "INFO"

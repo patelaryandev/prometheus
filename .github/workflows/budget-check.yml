@@ -1,0 +1,29 @@
+name: Budget Alert Check
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Daily at 9 AM UTC
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  budget-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+      
+      - name: Install dependencies
+        run: uv sync --frozen
+      
+      - name: Run budget check
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+        run: uv run python scripts/run_budget_check.py

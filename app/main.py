@@ -8,7 +8,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 
-from app.api.routes import example, health
+from app.api.routes import analytics, auth, categories, health, transactions
 from app.config import settings
 from app.core.database import init_database
 from app.core.metrics import setup_metrics
@@ -55,7 +55,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description="A production-ready FastAPI template",
+    description="Expense & Budget Tracker API - Track your spending and stay within budget",
     lifespan=lifespan,
     debug=settings.debug,
 )
@@ -92,7 +92,10 @@ logger.info("Prometheus metrics enabled")
 
 # Include routers
 app.include_router(health.router, prefix="/health", tags=["health"])
-app.include_router(example.router, prefix="/api", tags=["example"])
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(categories.router, prefix="/categories", tags=["categories"])
+app.include_router(transactions.router, prefix="/transactions", tags=["transactions"])
+app.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 
 
 @app.get("/")

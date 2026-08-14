@@ -1,4 +1,4 @@
-.PHONY: help install dev test lint format docker-build docker-run docker-compose-up clean test-integration
+.PHONY: help install dev test lint format docker-build docker-run docker-compose-up clean test-integration migrate migrate-create migrate-downgrade
 
 # Default target
 help: ## Show this help message
@@ -34,6 +34,15 @@ lint: ## Run linting with uv
 
 format: ## Format code with uv
 	uv run ruff format app/ tests/
+
+migrate: ## Run database migrations
+	uv run alembic upgrade head
+
+migrate-create: ## Create a new migration (use: make migrate-create msg="description")
+	uv run alembic revision --autogenerate -m "$(msg)"
+
+migrate-downgrade: ## Downgrade database by one revision
+	uv run alembic downgrade -1
 
 docker-build: ## Build Docker image
 	docker build -t fastapi-template .

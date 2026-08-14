@@ -1,244 +1,410 @@
-# FastAPI Production Starter Template v2.0.0
+# Expense & Budget Tracker API
 
-[![CI](https://github.com/armanshirzad/fastapi-production-template/actions/workflows/ci.yml/badge.svg)](https://github.com/armanshirzad/fastapi-production-template/actions/workflows/ci.yml)
-[![Release](https://github.com/armanshirzad/fastapi-production-template/actions/workflows/release.yml/badge.svg)](https://github.com/armanshirzad/fastapi-production-template/actions/workflows/release.yml)
-[![Python Version](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Docker](https://img.shields.io/badge/docker-ghcr.io%2Farmanshirzad%2Ffastapi--production--template-blue.svg)](https://github.com/armanshirzad/fastapi-production-template/pkgs/container/fastapi-production-template)
+A production-ready FastAPI application for tracking expenses and managing budgets. Track spending across categories, set monthly limits, and receive alerts when approaching budget thresholds. Built with async SQLAlchemy, JWT authentication, and comprehensive testing.
 
-A production-ready FastAPI template with Docker, CI/CD, observability, and one-click deployment to Render or Koyeb. **Now with UV package management for faster, more reliable builds!**
+**🚀 [Live Demo](https://your-app-url.onrender.com/docs)** ← Replace with your actual Render URL
 
-## Features
-
-- **FastAPI** with Python 3.12
-- **UV Package Management** for lightning-fast dependency resolution
-- **Docker** multi-stage build for production
-- **Prometheus** metrics integration
-- **Sentry** error tracking
-- **PostgreSQL** support (optional)
-- **Health checks** for monitoring
-- **One-click deploy** to Render or Koyeb
-- **GitHub Actions** CI/CD
-- **GitHub Container Registry** publishing
-- **Testing** with pytest
-- **Code quality** with ruff
-
-## Quick Deploy
-
-### Deploy to Render
-
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/armanshirzad/fastapi-production-template)
-
-1. Fork this repository
-2. Connect your GitHub account to Render
-3. Click "Deploy to Render" button above
-4. Configure environment variables
-5. Deploy!
-
-### Deploy to Koyeb
-
-[![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=docker&image=ghcr.io/armanshirzad/fastapi-production-template:latest)
-
-1. Fork this repository
-2. Create account at [Koyeb](https://app.koyeb.com)
-3. Click "Deploy to Koyeb" button above
-4. Configure environment variables
-5. Deploy!
-
-## CI/CD Overview
-
-- **Workflow files:** `.github/workflows/ci.yml` runs lint and tests; `.github/workflows/release.yml` builds the Docker image and pushes to GHCR on tag pushes (guarded to run only on this repository, not forks).
-- **Registry:** pushes to `ghcr.io/armanshirzad/fastapi-production-template`.
-- **Branch strategy:** run CI on `main` and `develop`, require tags `v*` for releases.
-- **Publishing guard:** image publishing only runs on this repository owner (`github.repository_owner == 'ArmanShirzad'`) so forks don't attempt to push.
-
-## Quick Start
-
-```bash
-# Clone and setup (replace with your repo URL)
-git clone https://github.com/armanshirzad/fastapi-production-template.git
-cd fastapi-production-template
-cp .env.example .env
-
-# Install dependencies with UV (recommended)
-uv sync
-
-# Run locally (no database)
-uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# Or with PostgreSQL
-make docker-compose-up
-```
-
-### Alternative: Traditional pip setup
-
-```bash
-# If you prefer pip (legacy support)
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+---
 
 ## Architecture
 
 ```
-┌─────────┐      ┌──────────────┐      ┌──────────┐
-│ Client  │─────>│   FastAPI    │─────>│ Database │
-└─────────┘      │   + Metrics  │      │(optional)│
-                 │   + Sentry   │      └──────────┘
-                 └──────────────┘
-                        │
-                        v
-                 ┌──────────────┐
-                 │  Prometheus  │
-                 │   /metrics   │
-                 └──────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                         Expense Tracker API                   │
+├──────────────────────────────────────────────────────────────┤
+│                                                               │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │   Auth      │  │ Categories  │  │Transactions │         │
+│  │  /auth/*    │  │/categories/*│  │/transactions│         │
+│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘         │
+│         │                │                │                  │
+│         └────────────────┴────────────────┘                  │
+│                          │                                    │
+│                  ┌───────▼────────┐                          │
+│                  │  Services Layer │                          │
+│                  │  - Analytics    │                          │
+│                  │  - Alerts       │                          │
+│                  └───────┬─────────┘                          │
+│                          │                                    │
+│                  ┌───────▼────────┐                          │
+│                  │ SQLAlchemy ORM  │                          │
+│                  │  Async Engine   │                          │
+│                  └───────┬─────────┘                          │
+│                          │                                    │
+│                  ┌───────▼────────┐                          │
+│                  │   PostgreSQL    │                          │
+│                  │   (or SQLite)   │                          │
+│                  └─────────────────┘                          │
+│                                                               │
+├──────────────────────────────────────────────────────────────┤
+│  Observability: Prometheus metrics, Sentry error tracking    │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-## Configuration
+---
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `APP_NAME` | Application name | FastAPI Template |
-| `APP_VERSION` | Application version | 0.1.0 |
-| `ENVIRONMENT` | Environment (dev/staging/prod) | development |
-| `DEBUG` | Debug mode | True |
-| `LOG_LEVEL` | Logging level | INFO |
-| `DATABASE_URL` | Database connection string | (optional) |
-| `SECRET_KEY` | Secret key for security | (generated if not provided) |
-| `CORS_ORIGINS` | CORS allowed origins | (empty for security) |
-| `SENTRY_DSN` | Sentry DSN for error tracking | (optional) |
-| `HOST` | Server host | 0.0.0.0 |
-| `PORT` | Server port | 8000 |
+## Features
 
-## Secret Configuration
+- **JWT Authentication**: Secure user registration and login with bcrypt password hashing
+- **Category Management**: Create spending categories with optional monthly budget limits
+- **Transaction Tracking**: Record expenses and income with timestamps and descriptions
+- **Analytics Dashboard**: View spend-by-category and budget status for any month
+- **Budget Alerts**: Scheduled job checks for 80% and 100% budget threshold violations
+- **Production Ready**: Includes Prometheus metrics, Sentry integration, and comprehensive tests
+- **Async Everything**: Built on async/await with SQLAlchemy async and FastAPI
 
-The template runs out of the box with no secrets. You can optionally add these for production:
+---
 
-- **`SECRET_KEY`** — Secret used by the application for signing and security. If not provided, a random key is generated at startup in development/test.
-- **`DATABASE_URL`** — PostgreSQL connection string. When set, the app uses PostgreSQL; when unset, the app runs without a database and the readiness endpoint will report "not configured" for the database.
-- **`SENTRY_DSN`** — When set, Sentry SDK is initialized in the application for error reporting; when empty, Sentry is skipped.
+## API Endpoints
 
-Notes:
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| **Authentication** |
+| POST | `/auth/register` | Register a new user | ❌ |
+| POST | `/auth/login` | Login and get JWT token | ❌ |
+| **Categories** |
+| GET | `/categories/` | List user's categories | ✅ |
+| POST | `/categories/` | Create a category | ✅ |
+| GET | `/categories/{id}` | Get category by ID | ✅ |
+| PUT | `/categories/{id}` | Update category | ✅ |
+| DELETE | `/categories/{id}` | Delete category | ✅ |
+| **Transactions** |
+| GET | `/transactions/` | List user's transactions (with pagination & filters) | ✅ |
+| POST | `/transactions/` | Create a transaction | ✅ |
+| GET | `/transactions/{id}` | Get transaction by ID | ✅ |
+| PUT | `/transactions/{id}` | Update transaction | ✅ |
+| DELETE | `/transactions/{id}` | Delete transaction | ✅ |
+| **Analytics** |
+| GET | `/analytics/summary` | Get spending summary and budget status | ✅ |
+| **Health** |
+| GET | `/health/` | Basic health check | ❌ |
+| GET | `/health/ready` | Readiness check (includes DB) | ❌ |
+| GET | `/metrics` | Prometheus metrics | ❌ |
 
-- **Workflows do not require any secrets.** CI always runs on pushes and pull requests. The release workflow uses the built‑in `GITHUB_TOKEN` and only pushes images from this repository (guarded by repository owner check). Forks will automatically skip the publishing step.
+---
 
-## Database Options
+## Setup Instructions
 
-### Without Database (Minimal)
-Leave `DATABASE_URL` empty in `.env` for a minimal API without database dependencies. The app will operate without persistence; `/health/ready` will still return 200 with `database: "not configured"`.
+### Prerequisites
 
-### With PostgreSQL
-Set `DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/dbname` in `.env`.
+- Python 3.12+
+- [uv](https://docs.astral.sh/uv/) (recommended) or pip
+- PostgreSQL (or SQLite for development)
 
-## Development
+### 1. Clone and Install Dependencies
 
 ```bash
-# Install dependencies with UV (recommended)
-uv sync
+# Clone the repository
+git clone <your-repo-url>
+cd prometheus
 
-# Run development server
+# Install with uv (recommended)
+make install
+
+# Or with pip
+pip install -r requirements.txt -r requirements-dev.txt
+```
+
+### 2. Configure Environment
+
+Create a `.env` file in the project root:
+
+```env
+# Application
+APP_NAME=Expense Tracker API
+APP_VERSION=1.0.0
+ENVIRONMENT=development
+DEBUG=true
+LOG_LEVEL=INFO
+
+# Database
+DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/expense_tracker
+# Or for SQLite: sqlite+aiosqlite:///./expense_tracker.db
+
+# Security
+SECRET_KEY=your-secret-key-here-generate-with-openssl-rand-hex-32
+
+# CORS (comma-separated origins)
+CORS_ORIGINS=http://localhost:3000,http://localhost:8000
+
+# Optional: Sentry
+SENTRY_DSN=your-sentry-dsn-here
+```
+
+### 3. Run Database Migrations
+
+```bash
+# Run migrations
+make migrate
+
+# Or manually
+uv run alembic upgrade head
+```
+
+### 4. Start the Development Server
+
+```bash
+# Start with auto-reload
+make dev
+
+# Or manually
 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-# Run tests
-uv run pytest tests/ -v --cov=app --cov-report=html --cov-report=term
-
-# Lint code
-uv run ruff check app/ tests/
-uv run ruff format --check app/ tests/
-
-# Format code
-uv run ruff format app/ tests/
-
-# Build Docker image
-make docker-build
-
-# Run with Docker Compose (includes PostgreSQL)
-make docker-compose-up
 ```
 
-### Legacy pip commands (still supported)
+The API will be available at `http://localhost:8000`
+
+API documentation (Swagger UI): `http://localhost:8000/docs`
+
+### 5. Run Tests
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
+# Run all tests with coverage
+make test
 
-# Run development server
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+# Run specific test file
+uv run pytest tests/test_auth.py -v
 
-# Run tests
-pytest tests/ -v --cov=app --cov-report=html --cov-report=term
-
-# Lint code
-ruff check app/ tests/
-ruff format --check app/ tests/
+# Run with coverage report
+uv run pytest --cov=app --cov-report=html
 ```
 
-## Observability
+---
 
-### Prometheus Metrics
-- Endpoint: `/metrics`
-- Metrics: HTTP requests, duration, status codes
-- Integration: `prometheus-fastapi-instrumentator`
+## Usage Example
 
-### Sentry Integration
-- Automatic error tracking when `SENTRY_DSN` is provided
-- Performance monitoring
-- Skipped automatically when `SENTRY_DSN` is empty
+### 1. Register a user
 
-### Health Checks
-- `/health` - Basic health check
-- `/health/ready` - Readiness check; reports database status and succeeds whether the database is configured or not
+```bash
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "securepass123"}'
+```
+
+### 2. Login and get token
+
+```bash
+curl -X POST http://localhost:8000/auth/login \
+  -d "username=user@example.com&password=securepass123"
+
+# Response: {"access_token": "eyJ...", "token_type": "bearer"}
+```
+
+### 3. Create a category
+
+```bash
+curl -X POST http://localhost:8000/categories/ \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Groceries", "monthly_limit": 500.00}'
+```
+
+### 4. Record a transaction
+
+```bash
+curl -X POST http://localhost:8000/transactions/ \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "category_id": 1,
+    "amount": -45.50,
+    "description": "Weekly shopping"
+  }'
+```
+
+### 5. View analytics
+
+```bash
+curl -X GET "http://localhost:8000/analytics/summary?year=2026&month=8" \
+  -H "Authorization: Bearer YOUR_TOKEN"
+```
+
+---
+
+## Scheduled Budget Alerts
+
+The project includes a budget alert system that checks for spending thresholds:
+
+```bash
+# Run manually
+uv run python scripts/run_budget_check.py
+```
+
+For production deployment on **Render**, add a cron job to your `render.yaml`:
+
+```yaml
+- type: cron
+  name: budget-alert-checker
+  schedule: "0 9 * * *"  # Daily at 9 AM UTC
+  dockerCommand: uv run python scripts/run_budget_check.py
+```
+
+See [SCHEDULED_JOBS.md](SCHEDULED_JOBS.md) for detailed setup instructions.
+
+---
+
+## Database Migrations
+
+```bash
+# Create a new migration
+make migrate-create msg="add new field"
+
+# Apply migrations
+make migrate
+
+# Rollback one migration
+make migrate-downgrade
+```
+
+---
+
+## Design Decisions
+
+### Why JWT over Sessions?
+
+**JWT (JSON Web Tokens)** provides stateless authentication ideal for modern APIs:
+
+- **Scalability**: No server-side session storage required, making horizontal scaling trivial
+- **Mobile-friendly**: Tokens can be stored in mobile apps without cookie complexity
+- **Microservices**: Tokens can be validated by multiple services without shared state
+- **Decentralized**: No database lookup needed on every request
+
+Trade-off: Cannot instantly revoke tokens (must wait for expiration). For this use case, 30-minute expiry provides a good balance.
+
+### Why Service Layer Separation?
+
+The architecture separates **route handlers** (`app/api/routes/`) from **business logic** (`app/services/`):
+
+- **Testability**: Business logic can be tested independently of HTTP layer
+- **Reusability**: Analytics service used by both API endpoint and alert script
+- **Maintainability**: Clear separation of concerns makes codebase easier to navigate
+- **Future-proofing**: Same services can power CLI tools, background jobs, or GraphQL resolvers
+
+This is overkill for tiny projects but demonstrates production patterns for portfolio/interview purposes.
+
+### Why Alembic?
+
+**Alembic** is SQLAlchemy's migration tool, chosen because:
+
+- **Version Control for Schema**: Every schema change is tracked in code
+- **Reproducible Deployments**: Same migrations run identically across dev/staging/prod
+- **Team Collaboration**: No merge conflicts from ad-hoc schema changes
+- **Rollback Support**: Can revert schema changes when deployments fail
+- **Autogenerate**: Can detect model changes and generate migrations automatically
+
+Alternative approaches like `.create_all()` work for prototypes but don't scale to team environments.
+
+---
+
+## Deployment
+
+### Deploy to Render
+
+1. Push your code to GitHub
+2. Create a new Web Service on [Render](https://render.com)
+3. Connect your repository
+4. Render will automatically detect `render.yaml` and set up:
+   - PostgreSQL database
+   - Web service with Docker
+   - Environment variables
+5. Add the cron job for budget alerts (see `SCHEDULED_JOBS.md`)
+
+### Environment Variables on Render
+
+Set these in the Render dashboard:
+
+- `DATABASE_URL` - Auto-configured from PostgreSQL service
+- `SECRET_KEY` - Generate with: `openssl rand -hex 32`
+- `ENVIRONMENT` - Set to `production`
+- `DEBUG` - Set to `false`
+- `SENTRY_DSN` - (Optional) Your Sentry project DSN
+
+---
+
+## Development Commands
+
+```bash
+make help              # Show all available commands
+make install           # Install dependencies with uv
+make dev               # Run development server
+make test              # Run tests with coverage
+make lint              # Run code linting
+make format            # Format code with ruff
+make migrate           # Run database migrations
+make migrate-create    # Create new migration
+make docker-build      # Build Docker image
+make docker-run        # Run in Docker
+```
+
+---
+
+## Tech Stack
+
+- **Framework**: FastAPI 0.104+
+- **Database**: PostgreSQL (production) / SQLite (development)
+- **ORM**: SQLAlchemy 2.0 (async)
+- **Migrations**: Alembic
+- **Authentication**: JWT (python-jose) + bcrypt (passlib)
+- **Testing**: pytest + pytest-asyncio + pytest-cov
+- **Linting**: Ruff
+- **Monitoring**: Prometheus + Sentry
+- **Deployment**: Docker + Render
+
+---
 
 ## Project Structure
 
 ```
-app/
-├── __init__.py
-├── main.py              # FastAPI application
-├── config.py            # Configuration settings
-├── api/
-│   ├── __init__.py
-│   └── routes/
-│       ├── __init__.py
-│       ├── health.py    # Health check endpoints
-│       └── example.py   # Example CRUD endpoints
-├── core/
-│   ├── __init__.py
-│   ├── database.py      # Database configuration
-│   └── metrics.py       # Prometheus metrics
-├── models/              # SQLAlchemy models (optional)
-└── services/            # Business logic layer
-tests/
-├── __init__.py
-├── conftest.py
-└── test_health.py
+.
+├── app/
+│   ├── api/
+│   │   └── routes/          # API endpoint handlers
+│   │       ├── auth.py      # Authentication
+│   │       ├── categories.py
+│   │       ├── transactions.py
+│   │       └── analytics.py
+│   ├── core/
+│   │   ├── database.py      # Database connection
+│   │   ├── security.py      # JWT & password hashing
+│   │   ├── deps.py          # Dependency injection
+│   │   └── metrics.py       # Prometheus metrics
+│   ├── models/              # SQLAlchemy models
+│   ├── schemas/             # Pydantic schemas
+│   ├── services/            # Business logic layer
+│   │   ├── analytics.py
+│   │   └── alerts.py
+│   ├── config.py            # Settings management
+│   └── main.py              # Application entry point
+├── alembic/                 # Database migrations
+├── scripts/
+│   └── run_budget_check.py  # Scheduled alert job
+├── tests/                   # Test suite
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+└── Makefile
 ```
 
-## Security
-
-This template includes several security features:
-
-- **CORS Protection**: Empty origins by default (configure via `CORS_ORIGINS`)
-- **Trusted Host Middleware**: Prevents host header attacks in production
-- **Non-root Docker User**: Runs as `appuser` instead of root
-- **Security Headers**: Basic security middleware included
-- **Dependency Scanning**: Dependabot for automated security updates
-- **Code Analysis**: CodeQL security scanning
-- **Safe Defaults**: App runs without secrets by default; production deployments should set `SECRET_KEY` and configure `CORS_ORIGINS` explicitly.
-
-For security vulnerabilities, please see [SECURITY.md](SECURITY.md).
+---
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Run `make test` and `make lint`
-6. Submit a pull request
+2. Create a feature branch: `git checkout -b feature/my-feature`
+3. Make your changes and add tests
+4. Run tests: `make test`
+5. Format code: `make format`
+6. Commit: `git commit -am 'Add new feature'`
+7. Push: `git push origin feature/my-feature`
+8. Create a Pull Request
+
+---
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Acknowledgments
+
+Built with [FastAPI](https://fastapi.tiangolo.com/), inspired by production API best practices and real-world fintech applications.
